@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t mantissaman/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run mantissaman/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t mantissaman/multi-client ./client
+  - docker build -t mantissaman/multi-nginx ./nginx
+  - docker build -t mantissaman/multi-server ./server
+  - docker build -t mantissaman/multi-worker ./worker
+  # Login to docker ci
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take these images and push them to docker hub
+  - docker push mantissaman/multi-client
+  - docker push mantissaman/multi-nginx
+  - docker push mantissaman/multi-server
+  - docker push mantissaman/multi-worker
